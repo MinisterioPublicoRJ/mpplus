@@ -1,18 +1,18 @@
 from django.db import models
 
 
-class Icones(models.Model):
+class Icone(models.Model):
     nome = models.CharField(max_length=255)
     data_file = models.FileField(upload_to='icons/')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
 
-class Areas(models.Model):
+class Area(models.Model):
     nome = models.CharField(max_length=255)
     cor = models.CharField(max_length=7)
     icone = models.ForeignKey(
-        Icones,
+        Icone,
         on_delete=models.SET_NULL,
         blank=True,
         null=True,

@@ -44,9 +44,12 @@ class Tema(models.Model):
     area_mae = models.ForeignKey(
         Area,
         on_delete=models.PROTECT,
-        related_name='area_mae',
+        related_name='temas',
     )
-    areas_correlatas = models.ManyToManyField(Area, related_name='areas_correlatas')
+    areas_correlatas = models.ManyToManyField(
+        Area,
+        related_name='temas_correlatos'
+    )
     visivel = models.BooleanField(default=True)
     fonte_dados = models.TextField(null=True, blank=True)
     tabela_pg = models.CharField(max_length=255, null=True, blank=True)
@@ -60,6 +63,6 @@ class Tema(models.Model):
     dados_estado = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     def __str__(self):
         return self.titulo

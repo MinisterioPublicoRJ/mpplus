@@ -17,9 +17,19 @@ class IconeSerializer(serializers.ModelSerializer):
 
 class AreaSerializer(serializers.ModelSerializer):
     icone = IconeSerializer()
+    count = serializers.SerializerMethodField()
 
     class Meta:
         model = Area
         depth = 1
-        fields = ('id', 'nome', 'cor', 'prioridade', 'icone')
-        # TODO Incluir contagem de temas
+        fields = (
+            'id',
+            'nome',
+            'cor',
+            'icone',
+            'prioridade',
+            'count',
+        )
+
+    def get_count(self, obj):
+        return obj.temas.count() + obj.temas_correlatos.count()

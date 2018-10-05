@@ -7,11 +7,10 @@ from .forms import AreaForm
 @admin.register(Icone)
 class IconeAdmin(admin.ModelAdmin):
     fieldsets = [
-        (None, {'fields': ['nome', 'file_name']}),
+        (None, {'fields': ['nome']}),
         ('Upload do ícone', {'fields': ['data_file']}),
     ]
-    list_display = ('nome', 'file_name', 'data_file', 'updated_at')
-    # TODO Capturar o campo file_name do nome do arquivo
+    list_display = ('nome', 'updated_at')
 
 
 @admin.register(Area)

@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Area, Icone
+from .models import Area, Icone, Tema
 
 
 class IconeSerializer(serializers.ModelSerializer):
@@ -33,3 +33,9 @@ class AreaSerializer(serializers.ModelSerializer):
 
     def get_count(self, obj):
         return obj.temas.count() + obj.temas_correlatos.count()
+
+
+class TemaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Tema
+        fields = ('id', 'titulo')

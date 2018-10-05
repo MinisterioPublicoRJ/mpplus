@@ -27,7 +27,32 @@ class AreaAdmin(admin.ModelAdmin):
 
 @admin.register(Tema)
 class TemaAdmin(admin.ModelAdmin):
-    exclude = ('created_at', 'updated_at', )
+    fieldsets = (
+        (None, {'fields': (
+            'titulo',
+        )}),
+        ('Areas', {'fields': (
+            'area_mae',
+            'areas_correlatas',
+        )}),
+        ('Descrição', {'fields': (
+            'subtitulo',
+            'descricao',
+            'fonte_dados',
+            'observacao',
+            'prioridade',
+        )}),
+        ('Conexão com dados', {'fields': (
+            'tabela_pg',
+            'tabela_drive',
+            'url_tableau',
+        )}),
+        ('Visibilidade', {'fields': (
+            'visivel',
+            'dados_craai',
+            'dados_estado',
+        )})
+    )
     list_filter = [
         'updated_at',
         'area_mae',

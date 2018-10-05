@@ -10,5 +10,5 @@ class AreaViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class TemaViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Tema.objects.all()
+    queryset = Tema.objects.filter(visivel=True)
     serializer_class = TemaSerializer

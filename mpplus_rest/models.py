@@ -48,7 +48,8 @@ class Tema(models.Model):
     )
     areas_correlatas = models.ManyToManyField(
         Area,
-        related_name='temas_correlatos'
+        related_name='temas_correlatos',
+        blank=True
     )
     visivel = models.BooleanField(default=True)
     fonte_dados = models.TextField(null=True, blank=True)

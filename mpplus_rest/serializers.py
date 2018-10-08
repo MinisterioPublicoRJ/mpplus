@@ -31,7 +31,8 @@ class AreaSerializer(serializers.ModelSerializer):
         )
 
     def get_count(self, obj):
-        return obj.temas.count() + obj.temas_correlatos.count()
+        return obj.temas.filter(visivel=True).count() +\
+               obj.temas_correlatos.filter(visivel=True).count()
 
 
 class InternalAreaSerializer(serializers.ModelSerializer):

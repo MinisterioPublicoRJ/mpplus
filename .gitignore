@@ -1,2 +1,6 @@
 .directory
 .vscode/
+__pycache__/
+media/
+
+settings.ini

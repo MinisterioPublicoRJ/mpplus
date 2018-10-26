@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 from .models import Icone, Area, Tema
-from .forms import AreaForm
+from .forms import AreaForm, TemaForm
 
 
 @admin.register(Icone)
@@ -27,6 +27,7 @@ class AreaAdmin(admin.ModelAdmin):
 
 @admin.register(Tema)
 class TemaAdmin(admin.ModelAdmin):
+    form = TemaForm
     fieldsets = (
         (None, {'fields': (
             'titulo',
@@ -53,7 +54,7 @@ class TemaAdmin(admin.ModelAdmin):
             'fields': (
                 'tabela_pg',
                 'tabela_drive',
-                'url_tableau',
+                'url_tableau'
             )
         }),
         ('Visibilidade', {

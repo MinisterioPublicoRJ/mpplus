@@ -10,9 +10,13 @@ class IconeSerializer(serializers.ModelSerializer):
 
     def to_representation(self, value):
         request = self.context.get('request')
-        return request.build_absolute_uri(
-            value.data_file.url
-        )
+        f = value.data_file
+
+        text_rep = ''
+        with f.open(mode='rb'):
+            text_rep = f.read()
+
+        return text_rep
 
 
 class AreaSerializer(serializers.ModelSerializer):

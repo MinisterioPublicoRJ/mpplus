@@ -7,7 +7,7 @@ from .models import Area, Tema, Icone
 class IconeForm(forms.ModelForm):
     class Meta:
         model: Icone
-        fields = ['nome', 'data_file']
+        fields = ['nome', 'data_file', 'image']
 
 
 class AreaForm(forms.ModelForm):

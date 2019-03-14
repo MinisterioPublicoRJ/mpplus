@@ -3,6 +3,23 @@ from django.contrib import admin
 from .models import Icone, Area, Tema
 from .forms import IconeForm, AreaForm, TemaForm
 
+import xml.etree.cElementTree as et
+
+
+def is_svg(file):
+    if file:
+        tag = None
+        try:
+            for event, el in et.iterparse(file, ('start',)):
+                tag = el.tag
+                break
+        except et.ParseError:
+            pass
+
+        file.seek(0)
+        return tag == '{http://www.w3.org/2000/svg}svg'
+    return False
+
 
 @admin.register(Icone)
 class IconeAdmin(admin.ModelAdmin):
@@ -11,9 +28,11 @@ class IconeAdmin(admin.ModelAdmin):
 
     def save_model(self, request, obj, form, change):
         file = request.FILES.get('data_file', None)
-        if(file):
+        if(is_svg(file)):
             obj.image = file.read().decode()
         super(IconeAdmin, self).save_model(request, obj, form, change)
+
+
 
 
 @admin.register(Area)

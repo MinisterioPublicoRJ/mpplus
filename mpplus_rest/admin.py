@@ -1,13 +1,19 @@
 from django.contrib import admin
 
 from .models import Icone, Area, Tema
-from .forms import AreaForm, TemaForm
+from .forms import IconeForm, AreaForm, TemaForm
 
 
 @admin.register(Icone)
 class IconeAdmin(admin.ModelAdmin):
-    exclude = ('created_at', 'updated_at', )
+    form = IconeForm
     list_display = ('nome', 'updated_at')
+
+    # def save_model(self, request, obj, form, change):
+    #    file = request.FILES.get('svg_file', None)
+    #    if(is_svg(file)):
+    #        obj.image = file.read().decode()
+    #    super(IconeAdmin, self).save_model(request, obj, form, change)
 
 
 @admin.register(Area)

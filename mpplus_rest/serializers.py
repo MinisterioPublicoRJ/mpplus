@@ -6,17 +6,15 @@ from .models import Area, Icone, Tema
 class IconeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Icone
-        fields = ('data_file', )
-
-    def to_representation(self, value):
-        request = self.context.get('request')
-        return request.build_absolute_uri(
-            value.data_file.url
+        fields = (
+            'id',
+            'nome',
+            'image',
         )
 
 
 class AreaSerializer(serializers.ModelSerializer):
-    icone = IconeSerializer()
+    icone = serializers.PrimaryKeyRelatedField(read_only=True)
     count = serializers.SerializerMethodField()
 
     class Meta:
@@ -36,7 +34,7 @@ class AreaSerializer(serializers.ModelSerializer):
 
 
 class InternalAreaSerializer(serializers.ModelSerializer):
-    icone = IconeSerializer()
+    icone = serializers.PrimaryKeyRelatedField(read_only=True)
 
     class Meta:
         model = Area

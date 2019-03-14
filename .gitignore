@@ -5,3 +5,4 @@ media/
 
 settings.ini
 .env
+.production.env

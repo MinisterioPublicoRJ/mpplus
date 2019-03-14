@@ -10,8 +10,9 @@ class IconeAdmin(admin.ModelAdmin):
     list_display = ('nome', 'updated_at')
 
     def save_model(self, request, obj, form, change):
-        file = request.FILES.get('data_file', '')
-        obj.image = file.read().decode()
+        file = request.FILES.get('data_file', None)
+        if(file):
+            obj.image = file.read().decode()
         super(IconeAdmin, self).save_model(request, obj, form, change)
 
 

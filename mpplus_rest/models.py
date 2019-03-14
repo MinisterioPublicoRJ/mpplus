@@ -5,7 +5,6 @@ from colorfield.fields import ColorField
 
 class Icone(models.Model):
     nome = models.CharField(max_length=255)
-    data_file = models.FileField(upload_to='icons/')
     image = models.TextField(null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

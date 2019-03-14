@@ -1,7 +1,13 @@
 from django import forms
 
-from .models import Area, Tema
+from .models import Area, Tema, Icone
 # from .scrapper import tableau_data
+
+
+class IconeForm(forms.ModelForm):
+    class Meta:
+        model: Icone
+        fields = ['nome', 'data_file']
 
 
 class AreaForm(forms.ModelForm):

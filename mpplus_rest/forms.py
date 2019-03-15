@@ -11,7 +11,7 @@ class IconeForm(forms.ModelForm):
     image_original = None
 
     class Meta:
-        model: Icone
+        model = Icone
         fields = ['nome', 'image']
 
     def __init__(self, *args, **kwargs):

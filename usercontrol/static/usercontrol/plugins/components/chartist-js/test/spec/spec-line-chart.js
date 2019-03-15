@@ -9,6 +9,119 @@ describe('Line chart tests', function () {
 
   });
 
+  describe('grids', function() {
+
+    var chart;
+    var options;
+    var data;
+
+    beforeEach(function() {
+      data = {
+        series: [[
+          { x: 1, y: 1 },
+          { x: 3, y: 5 }
+        ]]
+      };
+      options =  {
+        axisX: {
+          type: Chartist.AutoScaleAxis,
+          onlyInteger: true
+        },
+        axisY: {
+          type: Chartist.AutoScaleAxis,
+          onlyInteger: true
+        }
+      };
+    });
+
+    function onCreated(fn) {
+      jasmine.getFixtures().set('<div class="ct-chart ct-golden-section"></div>');
+      chart = new Chartist.Line('.ct-chart', data, options);
+      chart.on('created', fn);
+    }
+
+    it('should contain ct-grids group', function(done) {
+      onCreated(function () {
+        expect($('g.ct-grids').length).toBe(1);
+        done();
+      });
+    });
+
+    it('should draw grid lines', function(done) {
+      onCreated(function () {
+        expect($('g.ct-grids line.ct-grid.ct-horizontal').length).toBe(3);
+        expect($('g.ct-grids line.ct-grid.ct-vertical').length).toBe(5);
+        done();
+      });
+    });
+
+    it('should draw grid background', function(done) {
+      options.showGridBackground = true;
+      onCreated(function () {
+        expect($('g.ct-grids rect.ct-grid-background').length).toBe(1);
+        done();
+      });
+    });
+
+    it('should not draw grid background if option set to false', function(done) {
+      options.showGridBackground = false;
+      onCreated(function () {
+        expect($('g.ct-grids rect.ct-grid-background').length).toBe(0);
+        done();
+      });
+    });
+
+  });
+
+  describe('AxisY position tests', function() {
+    var options;
+    var data;
+
+    beforeEach(function() {
+      data = {
+        series: [[
+          { x: 1, y: 1 },
+          { x: 3, y: 5 }
+        ]]
+      };
+      options =  {};
+    });
+
+    function onCreated(callback) {
+      jasmine.getFixtures().set('<div class="ct-chart ct-golden-section"></div>');
+      var chart = new Chartist.Line('.ct-chart', data, options);
+      chart.on('created', callback);
+    }
+
+    it('class should be ct-start if position start', function(done) {
+      options = {
+        axisY: {
+          position: 'start'
+        }
+      };
+      onCreated(function() {
+          $('.ct-label.ct-vertical').each(function() {
+            expect($(this).attr('class')).toBe('ct-label ct-vertical ct-start');
+          });
+          done();
+        });
+      });
+
+    it('class should be ct-end if position is any other value than start', function(done) {
+      options = {
+        axisY: {
+          position: 'right'
+        }
+      };
+      onCreated(function() {
+        $('.ct-label.ct-vertical').each(function() {
+          expect($(this).attr('class')).toBe('ct-label ct-vertical ct-end');
+        });
+        done();
+      });
+    });
+  });
+
   describe('ct:value attribute', function () {
     it('should contain x and y value for each datapoint', function (done) {
       jasmine.getFixtures().set('<div class="ct-chart ct-golden-section"></div>');
@@ -348,6 +461,32 @@ describe('Line chart tests', function () {
     });
   });
 
+  describe('Single value data tests', function() {
+    var data;
+
+    beforeEach(function() {
+      data = {
+        labels: [1],
+        series: [[1]]
+      };
+    });
+
+    function onCreated(callback) {
+      jasmine.getFixtures().set('<div class="ct-chart ct-golden-section"></div>');
+      var chart = new Chartist.Line('.ct-chart', data);
+      chart.on('created', callback);
+    }
+
+    it('should render without NaN values and points', function(done) {
+      onCreated(function() {
+          expect($('.ct-line').eq(0).attr('d')).toBe('M50,15');
+          expect($('.ct-point').eq(0).attr('x1')).toBe('50');
+          expect($('.ct-point').eq(0).attr('x2')).toBe('50.01');
+          done();
+        });
+      });
+  });
+
   describe('Empty data tests', function () {
     it('should render empty grid with no data', function (done) {
       jasmine.getFixtures().set('<div class="ct-chart ct-golden-section"></div>');
@@ -433,6 +572,26 @@ describe('Line chart tests', function () {
       chart.on('created', function () {
         // Find at least one vertical grid line
         expect(document.querySelector('.ct-grids .ct-grid.ct-vertical')).toBeDefined();
+        done();
+      });
+    });
+  });
+
+  describe('x1 and x2 attribute', function () {
+    it('should contain just a datapoint', function (done) {
+      jasmine.getFixtures().set('<div class="ct-chart ct-golden-section"></div>');
+
+      var chart = new Chartist.Line('.ct-chart', {
+        series: [[
+          {x: 1, y: 2}
+        ]]
+      }, {
+       fullWidth: true
+      });
+
+      chart.on('created', function () {
+        expect($('.ct-point').eq(0).attr('x1')).not.toBe('NaN');
+        expect($('.ct-point').eq(0).attr('x2')).not.toBe('NaN');
         done();
       });
     });

@@ -1,6 +1,32 @@
 describe('Axes tests', function() {
   'use strict';
 
+  describe('StepAxis projectValue should not return NaN', function() {
+    it('should return 0 if options.ticks.length == 1', function() {
+      var ticks = [1],
+      axisUnit = {
+        'pos':'y',
+        'len':'height',
+        'dir':'vertical',
+        'rectStart':'y2',
+        'rectEnd':'y1',
+        'rectOffset':'x1'
+      },
+      data = [[1]],
+      chartRect = {
+        'y2':0,
+        'y1':15,
+        'x1':50,
+        'x2':100
+      },
+      options = {
+        'ticks': ticks
+      },
+      stepAxis = new Chartist.StepAxis(axisUnit, data, chartRect, options);
+      expect(stepAxis.stepLength).toEqual(15);
+    });
+  });
+
   describe('fixed scale axis', function () {
     it('should order the tick array', function() {
 
@@ -13,12 +39,7 @@ describe('Axes tests', function() {
         'rectEnd':'y1',
         'rectOffset':'x1'
       },
-      data = {
-        'raw': {
-          'series':[[ {x: 1, y: 10}, {x: 2, y: 5}, {x: 3, y: -5} ]]
-        },
-        'normalized':[[ {'y':10,'x':1},{'y':5,'x':2},{'y':-5,'x':3} ]]
-      },
+      data = [[ {x: 1, y: 10}, {x: 2, y: 5}, {x: 3, y: -5} ]],
       chartRect = {
         'padding':{'top':15,'right':15,'bottom':5,'left':10},
         'y2':15,

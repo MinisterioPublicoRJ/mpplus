@@ -188,7 +188,7 @@ checking in your Javascript projects.
 
 ### Document type
 
-HTML5 (HTML syntax) is preferred for all HTML documents: `<!DOCTYPE html>  `.
+HTML5 (HTML syntax) is preferred for all HTML documents: `<!DOCTYPE html>`.
 
 (It’s recommended to use HTML, as text/html. Do not use XHTML. XHTML, as application/xhtml+xml,
 lacks both browser and infrastructure support and offers less room for optimization than HTML.)
@@ -214,7 +214,7 @@ and constraints, and that ensures proper HTML usage.
 
 **Recommended**
 ```
-<!DOCTYPE html>  
+<!DOCTYPE html>
 <meta charset="utf-8">
 <title>Test</title>
 <article>This is only a test.</article>
@@ -465,7 +465,7 @@ Clean separation of concerns implies the following things:
 
 **Not recommended**
 ```
-<!DOCTYPE html>  
+<!DOCTYPE html>
 <html>
 <head>
   <link rel="stylesheet" href="base.css">
@@ -487,7 +487,7 @@ Clean separation of concerns implies the following things:
 
 **Recommended**
 ```
-<!DOCTYPE html>  
+<!DOCTYPE html>
 <html>
 <head>
   <!-- Concatinate your style sheets into a single one -->

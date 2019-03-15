@@ -73,6 +73,8 @@
     areaBase: 0,
     // Specify if the lines should be smoothed. This value can be true or false where true will result in smoothing using the default smoothing interpolation function Chartist.Interpolation.cardinal and false results in Chartist.Interpolation.none. You can also choose other smoothing / interpolation functions available in the Chartist.Interpolation module, or write your own interpolation function. Check the examples for a brief description.
     lineSmooth: true,
+    // If the line chart should add a background fill to the .ct-grids group.
+    showGridBackground: false,
     // Overriding the natural low of the chart allows you to zoom in or limit the charts lowest displayed value
     low: undefined,
     // Overriding the natural high of the chart allows you to zoom in or limit the charts highest displayed value
@@ -99,6 +101,7 @@
       area: 'ct-area',
       grid: 'ct-grid',
       gridGroup: 'ct-grids',
+      gridBackground: 'ct-grid-background',
       vertical: 'ct-vertical',
       horizontal: 'ct-horizontal',
       start: 'ct-start',
@@ -111,11 +114,7 @@
    *
    */
   function createChart(options) {
-    this.data = Chartist.normalizeData(this.data);
-    var data = {
-      raw: this.data,
-      normalized: Chartist.getDataArray(this.data, options.reverseData, true)
-    };
+    var data = Chartist.normalizeData(this.data, options.reverseData, true);
 
     // Create new svg object
     this.svg = Chartist.createSvg(this.container, options.width, options.height, options.classNames.chart);
@@ -128,25 +127,29 @@
     var axisX, axisY;
 
     if(options.axisX.type === undefined) {
-      axisX = new Chartist.StepAxis(Chartist.Axis.units.x, data, chartRect, Chartist.extend({}, options.axisX, {
-        ticks: data.raw.labels,
+      axisX = new Chartist.StepAxis(Chartist.Axis.units.x, data.normalized.series, chartRect, Chartist.extend({}, options.axisX, {
+        ticks: data.normalized.labels,
         stretch: options.fullWidth
       }));
     } else {
-      axisX = options.axisX.type.call(Chartist, Chartist.Axis.units.x, data, chartRect, options.axisX);
+      axisX = options.axisX.type.call(Chartist, Chartist.Axis.units.x, data.normalized.series, chartRect, options.axisX);
     }
 
     if(options.axisY.type === undefined) {
-      axisY = new Chartist.AutoScaleAxis(Chartist.Axis.units.y, data, chartRect, Chartist.extend({}, options.axisY, {
-        high: Chartist.isNum(options.high) ? options.high : options.axisY.high,
-        low: Chartist.isNum(options.low) ? options.low : options.axisY.low
+      axisY = new Chartist.AutoScaleAxis(Chartist.Axis.units.y, data.normalized.series, chartRect, Chartist.extend({}, options.axisY, {
+        high: Chartist.isNumeric(options.high) ? options.high : options.axisY.high,
+        low: Chartist.isNumeric(options.low) ? options.low : options.axisY.low
       }));
     } else {
-      axisY = options.axisY.type.call(Chartist, Chartist.Axis.units.y, data, chartRect, options.axisY);
+      axisY = options.axisY.type.call(Chartist, Chartist.Axis.units.y, data.normalized.series, chartRect, options.axisY);
     }
 
     axisX.createGridAndLabels(gridGroup, labelGroup, this.supportsForeignObject, options, this.eventEmitter);
     axisY.createGridAndLabels(gridGroup, labelGroup, this.supportsForeignObject, options, this.eventEmitter);
+
+    if (options.showGridBackground) {
+      Chartist.createGridBackground(gridGroup, chartRect, options.classNames.gridBackground, this.eventEmitter);
+    }
 
     // Draw the series
     data.raw.series.forEach(function(series, seriesIndex) {
@@ -167,10 +170,10 @@
       var pathCoordinates = [],
         pathData = [];
 
-      data.normalized[seriesIndex].forEach(function(value, valueIndex) {
+      data.normalized.series[seriesIndex].forEach(function(value, valueIndex) {
         var p = {
-          x: chartRect.x1 + axisX.projectValue(value, valueIndex, data.normalized[seriesIndex]),
-          y: chartRect.y1 - axisY.projectValue(value, valueIndex, data.normalized[seriesIndex])
+          x: chartRect.x1 + axisX.projectValue(value, valueIndex, data.normalized.series[seriesIndex]),
+          y: chartRect.y1 - axisY.projectValue(value, valueIndex, data.normalized.series[seriesIndex])
         };
         pathCoordinates.push(p.x, p.y);
         pathData.push({
@@ -189,7 +192,7 @@
       };
 
       var smoothing = typeof seriesOptions.lineSmooth === 'function' ?
-        seriesOptions.lineSmooth : (seriesOptions.lineSmooth ? Chartist.Interpolation.cardinal() : Chartist.Interpolation.none());
+        seriesOptions.lineSmooth : (seriesOptions.lineSmooth ? Chartist.Interpolation.monotoneCubic() : Chartist.Interpolation.none());
       // Interpolating path where pathData will be used to annotate each path element so we can trace back the original
       // index, value and meta data
       var path = smoothing(pathCoordinates, pathData);
@@ -206,8 +209,8 @@
             x2: pathElement.x + 0.01,
             y2: pathElement.y
           }, options.classNames.point).attr({
-            'ct:value': [pathElement.data.value.x, pathElement.data.value.y].filter(Chartist.isNum).join(','),
-            'ct:meta': pathElement.data.meta
+            'ct:value': [pathElement.data.value.x, pathElement.data.value.y].filter(Chartist.isNumeric).join(','),
+            'ct:meta': Chartist.serialize(pathElement.data.meta)
           });
 
           this.eventEmitter.emit('draw', {
@@ -234,12 +237,13 @@
 
         this.eventEmitter.emit('draw', {
           type: 'line',
-          values: data.normalized[seriesIndex],
+          values: data.normalized.series[seriesIndex],
           path: path.clone(),
           chartRect: chartRect,
           index: seriesIndex,
           series: series,
           seriesIndex: seriesIndex,
+          seriesMeta: series.meta,
           axisX: axisX,
           axisY: axisY,
           group: seriesElement,
@@ -287,7 +291,7 @@
           // Emit an event for each area that was drawn
           this.eventEmitter.emit('draw', {
             type: 'area',
-            values: data.normalized[seriesIndex],
+            values: data.normalized.series[seriesIndex],
             path: areaPath.clone(),
             series: series,
             seriesIndex: seriesIndex,

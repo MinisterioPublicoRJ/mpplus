@@ -55,7 +55,7 @@
    *
    * @memberof Chartist.Svg
    * @param {Object|String} attributes An object with properties that will be added as attributes to the SVG element that is created. Attributes with undefined values will not be added. If this parameter is a String then the function is used as a getter and will return the attribute value.
-   * @param {String} ns If specified, the attribute will be obtained using getAttributeNs. In order to write namepsaced attributes you can use the namespace:attribute notation within the attributes object.
+   * @param {String} [ns] If specified, the attribute will be obtained using getAttributeNs. In order to write namepsaced attributes you can use the namespace:attribute notation within the attributes object.
    * @return {Object|String} The current wrapper object will be returned so it can be used for chaining or the attribute value if used as getter function.
    */
   function attr(attributes, ns) {
@@ -144,6 +144,16 @@
   function querySelectorAll(selector) {
     var foundNodes = this._node.querySelectorAll(selector);
     return foundNodes.length ? new Chartist.Svg.List(foundNodes) : null;
+  }
+
+  /**
+   * Returns the underlying SVG node for the current element.
+   *
+   * @memberof Chartist.Svg
+   * @returns {Node}
+   */
+  function getNode() {
+    return this._node;
   }
 
   /**
@@ -483,6 +493,7 @@
     root: root,
     querySelector: querySelector,
     querySelectorAll: querySelectorAll,
+    getNode: getNode,
     foreignObject: foreignObject,
     text: text,
     empty: empty,

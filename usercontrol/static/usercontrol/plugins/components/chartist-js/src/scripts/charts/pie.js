@@ -26,6 +26,7 @@
       series: 'ct-series',
       slicePie: 'ct-slice-pie',
       sliceDonut: 'ct-slice-donut',
+      sliceDonutSolid: 'ct-slice-donut-solid',
       label: 'ct-label'
     },
     // The start angle of the pie chart in degrees where 0 points north. A higher value offsets the start angle clockwise.
@@ -34,6 +35,8 @@
     total: undefined,
     // If specified the donut CSS classes will be used and strokes will be drawn instead of pie slices.
     donut: false,
+    // If specified the donut segments will be drawn as shapes instead of strokes.
+    donutSolid: false,
     // Specify the donut stroke width, currently done in javascript for convenience. May move to CSS styles in the future.
     // This option can be set as number or string to specify a relative width (i.e. 100 or '30%').
     donutWidth: 60,
@@ -81,15 +84,14 @@
    * @param options
    */
   function createChart(options) {
-    this.data = Chartist.normalizeData(this.data);
+    var data = Chartist.normalizeData(this.data);
     var seriesGroups = [],
       labelsGroup,
       chartRect,
       radius,
       labelRadius,
       totalDataSum,
-      startAngle = options.startAngle,
-      dataArray = Chartist.getDataArray(this.data, options.reverseData);
+      startAngle = options.startAngle;
 
     // Create SVG.js draw
     this.svg = Chartist.createSvg(this.container, options.width, options.height,options.donut ? options.classNames.chartDonut : options.classNames.chartPie);
@@ -98,7 +100,7 @@
     // Get biggest circle radius possible within chartRect
     radius = Math.min(chartRect.width() / 2, chartRect.height() / 2);
     // Calculate total of all series to get reference value or use total reference from optional options
-    totalDataSum = options.total || dataArray.reduce(function(previousValue, currentValue) {
+    totalDataSum = options.total || data.normalized.series.reduce(function(previousValue, currentValue) {
       return previousValue + currentValue;
     }, 0);
 
@@ -110,15 +112,17 @@
     // If this is a donut chart we need to adjust our radius to enable strokes to be drawn inside
     // Unfortunately this is not possible with the current SVG Spec
     // See this proposal for more details: http://lists.w3.org/Archives/Public/www-svg/2003Oct/0000.html
-    radius -= options.donut ? donutWidth.value / 2  : 0;
+    radius -= options.donut && !options.donutSolid ? donutWidth.value / 2  : 0;
 
     // If labelPosition is set to `outside` or a donut chart is drawn then the label position is at the radius,
     // if regular pie chart it's half of the radius
-    if(options.labelPosition === 'outside' || options.donut) {
+    if(options.labelPosition === 'outside' || options.donut && !options.donutSolid) {
       labelRadius = radius;
     } else if(options.labelPosition === 'center') {
       // If labelPosition is center we start with 0 and will later wait for the labelOffset
       labelRadius = 0;
+    } else if(options.donutSolid) {
+      labelRadius = radius - donutWidth.value / 2;
     } else {
       // Default option is 'inside' where we use half the radius so the label will be placed in the center of the pie
       // slice
@@ -134,39 +138,41 @@
     };
 
     // Check if there is only one non-zero value in the series array.
-    var hasSingleValInSeries = this.data.series.filter(function(val) {
+    var hasSingleValInSeries = data.raw.series.filter(function(val) {
       return val.hasOwnProperty('value') ? val.value !== 0 : val !== 0;
     }).length === 1;
 
+    // Creating the series groups
+    data.raw.series.forEach(function(series, index) {
+      seriesGroups[index] = this.svg.elem('g', null, null);
+    }.bind(this));
     //if we need to show labels we create the label group now
     if(options.showLabel) {
-      labelsGroup = this.svg.elem('g', null, null, true);
+      labelsGroup = this.svg.elem('g', null, null);
     }
 
     // Draw the series
     // initialize series groups
-    for (var i = 0; i < this.data.series.length; i++) {
+    data.raw.series.forEach(function(series, index) {
       // If current value is zero and we are ignoring empty values then skip to next value
-      if (dataArray[i] === 0 && options.ignoreEmptyValues) continue;
-
-      var series = this.data.series[i];
-      seriesGroups[i] = this.svg.elem('g', null, null, true);
+      if (data.normalized.series[index] === 0 && options.ignoreEmptyValues) return;
 
       // If the series is an object and contains a name or meta data we add a custom attribute
-      seriesGroups[i].attr({
+      seriesGroups[index].attr({
         'ct:series-name': series.name
       });
 
       // Use series class from series data or if not set generate one
-      seriesGroups[i].addClass([
+      seriesGroups[index].addClass([
         options.classNames.series,
-        (series.className || options.classNames.series + '-' + Chartist.alphaNumerate(i))
+        (series.className || options.classNames.series + '-' + Chartist.alphaNumerate(index))
       ].join(' '));
 
-      var endAngle = startAngle + dataArray[i] / totalDataSum * 360;
+      // If the whole dataset is 0 endAngle should be zero. Can't divide by 0.
+      var endAngle = (totalDataSum > 0 ? startAngle + data.normalized.series[index] / totalDataSum * 360 : 0);
 
       // Use slight offset so there are no transparent hairline issues
-      var overlappigStartAngle = Math.max(0, startAngle - (i === 0 || hasSingleValInSeries ? 0 : 0.2));
+      var overlappigStartAngle = Math.max(0, startAngle - (index === 0 || hasSingleValInSeries ? 0 : 0.2));
 
       // If we need to draw the arc for all 360 degrees we need to add a hack where we close the circle
       // with Z and use 359.99 degrees
@@ -177,44 +183,59 @@
       var start = Chartist.polarToCartesian(center.x, center.y, radius, overlappigStartAngle),
         end = Chartist.polarToCartesian(center.x, center.y, radius, endAngle);
 
+      var innerStart,
+        innerEnd,
+        donutSolidRadius;
+
       // Create a new path element for the pie chart. If this isn't a donut chart we should close the path for a correct stroke
-      var path = new Chartist.Svg.Path(!options.donut)
+      var path = new Chartist.Svg.Path(!options.donut || options.donutSolid)
         .move(end.x, end.y)
         .arc(radius, radius, 0, endAngle - startAngle > 180, 0, start.x, start.y);
 
       // If regular pie chart (no donut) we add a line to the center of the circle for completing the pie
       if(!options.donut) {
         path.line(center.x, center.y);
+      } else if (options.donutSolid) {
+        donutSolidRadius = radius - donutWidth.value;
+        innerStart = Chartist.polarToCartesian(center.x, center.y, donutSolidRadius, startAngle - (index === 0 || hasSingleValInSeries ? 0 : 0.2));
+        innerEnd = Chartist.polarToCartesian(center.x, center.y, donutSolidRadius, endAngle);
+        path.line(innerStart.x, innerStart.y);
+        path.arc(donutSolidRadius, donutSolidRadius, 0, endAngle - startAngle  > 180, 1, innerEnd.x, innerEnd.y);
       }
 
       // Create the SVG path
       // If this is a donut chart we add the donut class, otherwise just a regular slice
-      var pathElement = seriesGroups[i].elem('path', {
+      var pathClassName = options.classNames.slicePie;
+      if (options.donut) {
+        pathClassName = options.classNames.sliceDonut;
+        if (options.donutSolid) {
+          pathClassName = options.classNames.sliceDonutSolid;
+        }
+      }
+      var pathElement = seriesGroups[index].elem('path', {
         d: path.stringify()
-      }, options.donut ? options.classNames.sliceDonut : options.classNames.slicePie);
+      }, pathClassName);
 
       // Adding the pie series value to the path
       pathElement.attr({
-        'ct:value': dataArray[i],
+        'ct:value': data.normalized.series[index],
         'ct:meta': Chartist.serialize(series.meta)
       });
 
       // If this is a donut, we add the stroke-width as style attribute
-      if(options.donut) {
-        pathElement.attr({
-          'style': 'stroke-width: ' + donutWidth.value + 'px'
-        });
+      if(options.donut && !options.donutSolid) {
+        pathElement._node.style.strokeWidth = donutWidth.value + 'px';
       }
 
       // Fire off draw event
       this.eventEmitter.emit('draw', {
         type: 'slice',
-        value: dataArray[i],
+        value: data.normalized.series[index],
         totalDataSum: totalDataSum,
-        index: i,
+        index: index,
         meta: series.meta,
         series: series,
-        group: seriesGroups[i],
+        group: seriesGroups[index],
         element: pathElement,
         path: path.clone(),
         center: center,
@@ -225,9 +246,31 @@
 
       // If we need to show labels we need to add the label for this slice now
       if(options.showLabel) {
-        // Position at the labelRadius distance from center and between start and end angle
-        var labelPosition = Chartist.polarToCartesian(center.x, center.y, labelRadius, startAngle + (endAngle - startAngle) / 2),
-          interpolatedValue = options.labelInterpolationFnc(this.data.labels && !Chartist.isFalseyButZero(this.data.labels[i]) ? this.data.labels[i] : dataArray[i], i);
+        var labelPosition;
+        if(data.raw.series.length === 1) {
+          // If we have only 1 series, we can position the label in the center of the pie
+          labelPosition = {
+            x: center.x,
+            y: center.y
+          };
+        } else {
+          // Position at the labelRadius distance from center and between start and end angle
+          labelPosition = Chartist.polarToCartesian(
+            center.x,
+            center.y,
+            labelRadius,
+            startAngle + (endAngle - startAngle) / 2
+          );
+        }
+
+        var rawValue;
+        if(data.normalized.labels && !Chartist.isFalseyButZero(data.normalized.labels[index])) {
+          rawValue = data.normalized.labels[index];
+        } else {
+          rawValue = data.normalized.series[index];
+        }
+
+        var interpolatedValue = options.labelInterpolationFnc(rawValue, index);
 
         if(interpolatedValue || interpolatedValue === 0) {
           var labelElement = labelsGroup.elem('text', {
@@ -239,7 +282,7 @@
           // Fire off draw event
           this.eventEmitter.emit('draw', {
             type: 'label',
-            index: i,
+            index: index,
             group: labelsGroup,
             element: labelElement,
             text: '' + interpolatedValue,
@@ -252,7 +295,7 @@
       // Set next startAngle to current endAngle.
       // (except for last slice)
       startAngle = endAngle;
-    }
+    }.bind(this));
 
     this.eventEmitter.emit('created', {
       chartRect: chartRect,

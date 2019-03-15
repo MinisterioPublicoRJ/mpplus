@@ -9,7 +9,7 @@ def login(request):
     status = 200
 
     if request.method == 'POST':
-        usuario = Authenticator().authenticate(request, 
+        usuario = Authenticator().authenticate(request,
                                                request.POST.get('username', ''), 
                                                request.POST.get('password', ''))
 

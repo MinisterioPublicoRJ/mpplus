@@ -27,17 +27,22 @@ class Authenticator():
             except User.DoesNotExist:
                 response = session.get(url=settings.AITJ_MPRJ_USERINFO)
                 corpo = json.loads(response.content.decode('utf-8'))
+                permissions = corpo['permissions']
+                if 'ROLE_mp_plus_admin' in permissions and permissions['ROLE_mp_plus_admin']:
+                    user = User(username=username)
+                    user.is_staff = True
+                    user.is_superuser = False
+                    user.email = username + '@mprj.mp.br'
+                    user.first_name = corpo['userDetails']['nome'].split()[0]
+                    user.last_name = corpo['userDetails']['nome'].split()[-1]
+                    user.save()
 
-                user = User(username=username)
-                user.is_staff = True
-                user.is_superuser = False
-                user.email = username + '@mprj.mp.br'
-                user.first_name = corpo['userDetails']['nome'].split()[0]
-                user.last_name = corpo['userDetails']['nome'].split()[-1]
-                user.save()
-
-                mpplus = Group.objects.get(name='MP_PLUS')
-                mpplus.user_set.add(user)
+                    mpplus = Group.objects.get(name='MP_PLUS')
+                    mpplus.user_set.add(user)
+                else:
+                    return None
             return user
+
+
 
         return None

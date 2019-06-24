@@ -14,13 +14,11 @@ class Icone(models.Model):
 
 
 class Area(models.Model):
-    nome = models.CharField(max_length=255)
+    nome = models.CharField(max_length=255) 
     cor = ColorField(default='#FF0000')
     icone = models.ForeignKey(
         Icone,
-        on_delete=models.SET_NULL,
-        blank=True,
-        null=True,
+        on_delete=models.PROTECT,
     )
     prioridade = models.IntegerField(default=1)
     created_at = models.DateTimeField(auto_now_add=True)

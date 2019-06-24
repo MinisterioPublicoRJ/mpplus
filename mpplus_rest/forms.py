@@ -1,3 +1,5 @@
+import re
+
 import xml.etree.cElementTree as et
 
 from django import forms
@@ -5,6 +7,12 @@ from django import forms
 from .models import Area, Tema, Icone
 # from .scrapper import tableau_data
 
+ERRORS = {
+    'SVG_FILE_ABSENT': 'É necessário prover um ícone no formato SVG',
+    'NOT_SVG': 'O arquivo submetido não é um SVG',
+    'BLANK_FIELD': 'O campo não deve estar em branco',
+    'NOT_COLOR': 'O campo deve conter uma string de cor válida no formato #FFFFFF'
+}
 
 class IconeForm(forms.ModelForm):
     image = forms.FileField()
@@ -26,7 +34,7 @@ class IconeForm(forms.ModelForm):
             if self.image_original:
                 return self.image_original
             else:
-                raise forms.ValidationError('Must provide a SVG icon')
+                raise forms.ValidationError(ERRORS['SVG_FILE_ABSENT'])
         else:
             tag = None
             try:
@@ -34,10 +42,10 @@ class IconeForm(forms.ModelForm):
                     tag = el.tag
                     break
             except et.ParseError:
-                raise forms.ValidationError('Not a SVG file')
+                raise forms.ValidationError(ERRORS['NOT_SVG'])
 
             if not tag == '{http://www.w3.org/2000/svg}svg':
-                raise forms.ValidationError('Not a SVG file')
+                raise forms.ValidationError(ERRORS['NOT_SVG'])
 
         file.seek(0)
         return file.read().decode()
@@ -48,18 +56,19 @@ class AreaForm(forms.ModelForm):
         model = Area
         fields = ['nome', 'cor', 'icone', 'prioridade']
 
+    def clean_nome(self):
+        if self.nome.isspace():
+            raise forms.ValidationError(ERRORS['BLANK_FIELD'])
+        return self.nome
 
-class TableauWidget(forms.widgets.Select):
-    def __init__(self, attrs=None):
-        super().__init__(attrs)
+    def clean_cor(self):
+        color_regex = r'^#([a-f0-9]{6})$'
+        if re.match(color_regex, self.cor, re.IGNORECASE):
+            return self.cor
+        raise forms.ValidationError(ERRORS['NOT_COLOR'])
 
 
 class TemaForm(forms.ModelForm):
     class Meta:
         model = Tema
         fields = '__all__'
-        # widgets = {
-        #     'url_tableau': forms.Select(
-        #         choices=tableau_data(profile='mprj', count=200)
-        #     )
-        # }

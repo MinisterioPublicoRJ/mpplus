@@ -72,3 +72,18 @@ class TemaForm(forms.ModelForm):
     class Meta:
         model = Tema
         fields = '__all__'
+
+    def clean_titulo(self):
+        if self.titulo.isspace():
+            raise forms.ValidationError(ERRORS['BLANK_FIELD'])
+        return self.titulo
+    
+    def clean_subtitulo(self):
+        if self.subtitulo.isspace():
+            raise forms.ValidationError(ERRORS['BLANK_FIELD'])
+        return self.subtitulo
+
+    def clean_fonte_dados(self):
+        if self.fonte_dados.isspace():
+            raise forms.ValidationError(ERRORS['BLANK_FIELD'])
+        return self.fonte_dados

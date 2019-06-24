@@ -56,7 +56,7 @@ class Tema(models.Model):
     subtitulo = models.CharField(max_length=255, null=True, blank=True)
     descricao = models.TextField(null=True, blank=True)
     observacao = models.CharField(max_length=255, null=True, blank=True)
-    url_tableau = models.CharField(max_length=255, null=True, blank=True)
+    url_tableau = models.URLField(max_length=255, null=True, blank=True)
     prioridade = models.IntegerField(default=1)
     dados_craai = models.BooleanField(default=True)
     dados_estado = models.BooleanField(default=True)
